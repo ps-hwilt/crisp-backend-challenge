@@ -36,5 +36,4 @@ public class EmployeeController : ControllerBase
     // TODO: Implement Search By Id
     // TODO: Implement Delete by Id
     // TODO: Implement Update by Id
-    // TODO: Implement Update by name
 }
