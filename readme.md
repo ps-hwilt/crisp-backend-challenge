@@ -21,13 +21,13 @@ Test out the server to make sure it works and think about how you might want to 
 
 ```curl
 curl -X 'GET' \
-  'https://localhost:<YOURPORT>/Employee' \
+  'https://localhost:YOURPORT/Employee' \
   -H 'accept: */*'
 ```
 or generally:
 ```http
 GET /Employee HTTP/1.1
-Host: localhost:<YOURPORT>
+Host: localhost:YOURPORT
 ```
 
 should return:
@@ -50,7 +50,7 @@ should return:
     }
 ]
 ```
-You may access the swagger endpoint: https://localhost:<YOURPORT>/swagger/index.html to explore the existing API. 
+You may access the swagger endpoint: https://localhost:YOURPORT/swagger/index.html to explore the existing API. 
 
 *NOTE*: The port may be different than 7221 depending on how you run the server.
 
