@@ -1,6 +1,6 @@
-using CRISP.Backend.Challenge;
-using CRISP.Backend.Challenge.Context;
 using Microsoft.AspNetCore;
+
+namespace CRISP.BackendChallenge;
 
 public static class Program
 {

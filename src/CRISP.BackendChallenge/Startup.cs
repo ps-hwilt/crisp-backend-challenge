@@ -1,10 +1,8 @@
-using CRISP.Backend.Challenge.Context;
-using CRISP.Backend.Challenge.Context.Models;
 using CRISP.BackendChallenge.Context;
 using CRISP.BackendChallenge.Repository;
 using Microsoft.EntityFrameworkCore;
 
-namespace CRISP.Backend.Challenge;
+namespace CRISP.BackendChallenge;
 
 public class Startup
 {
@@ -22,7 +20,7 @@ public class Startup
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
         services.AddEntityFrameworkSqlite().AddDbContext<ApplicationDbContext>();
-        services.AddTransient<IRepository, ContextRepository>();
+        services.AddTransient(typeof(IRepository < >), typeof(ContextRepository< >));
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

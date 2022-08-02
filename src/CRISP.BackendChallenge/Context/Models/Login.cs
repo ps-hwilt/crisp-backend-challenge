@@ -1,19 +1,14 @@
-namespace CRISP.Backend.Challenge.Context.Models;
+namespace CRISP.BackendChallenge.Context.Models;
 
 /// <summary>
 /// Login Entity Model
 /// </summary>
-public class Login
+public class Login : BaseEntity
 {
     /// <summary>
-    /// Id of the Login
+    /// Id of <see cref="Emplyoee"/> entity associated with the Login
     /// </summary>
-    public int Id { get; set; }
-
-    /// <summary>
-    /// Id of <see cref="Person"/> entity associated with the Login
-    /// </summary>
-    public int PersonId { get; set; }
+    public int EmployeeId { get; set; }
 
     /// <summary>
     /// Login Date
