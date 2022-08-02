@@ -106,6 +106,12 @@ create index IX_Logins_EmployeeId
 The `Logins` table tracks all of the logins for the people in person.
 
 ## Tasks
+
+1. Fork the reposistory
+2. Complete the tasks as defined below
+3. Issue a Pull Request From YOUR fork to our Main branch for evaluation
+
+### Task Details
 We already have code for to retrieve all employees as an example with an example to build upon.
 
 Implement The Following For The Employee Controller:
@@ -124,7 +130,6 @@ The API should follow general RESTful conventions.
 
 
 - Implement Unit Test For in the `test\CRISP.BackendChallenge.Tests` folder (if time permits)
-
 
 ## Things We Are Looking For:
 1. Ability to understand/constrain the problem
