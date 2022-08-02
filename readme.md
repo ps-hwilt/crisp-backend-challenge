@@ -12,6 +12,40 @@ Note that this code will only run on net6 specifically. Ensure you are not using
 The purpose of this challenge is to demonstrate one's ability to code up a REST API. The web-application is a simple Model-Controller API that currents returns a list of all 
 the available employees. The task here is to build up this new API to include CRUD and a search functionality. There are two tables that which their schema is defined in the SQL below.
 
+## Tasks
+
+1. Fork the reposistory
+2. Complete the tasks as defined below
+3. Issue a Pull Request From YOUR fork to our Main branch for evaluation
+
+### Task Details
+We already have code for to retrieve all employees as an example with an example to build upon.
+
+Implement The Following For The Employee Controller:
+  - Get By Id
+  - Create
+  - Update by Id
+  - Delete by Id
+  - Search
+    - id
+    - name
+    - department
+    - behavior to include all logins for the employee
+    - Sort Order On Login Dates (latest first)
+
+The API should follow general RESTful conventions.
+
+
+- Implement Unit Test For in the `test\CRISP.BackendChallenge.Tests` folder (if time permits)
+
+## Things We Are Looking For:
+1. Ability to understand/constrain the problem
+2. Well organized clean code
+3. Thoughtful REST endpoints
+4. Ability to isolate and debug problems as they arise
+5. Familiarity with C#, dotnet, and comfort working within an existing repo
+6. Familiarity and comfort writing tests
+
 ### Notes:
 This exercise should take no more than 3 hours but feel free to invest as much time as required to complete the challenge.
 
@@ -104,37 +138,3 @@ create index IX_Logins_EmployeeId
 ```
 
 The `Logins` table tracks all of the logins for the people in person.
-
-## Tasks
-
-1. Fork the reposistory
-2. Complete the tasks as defined below
-3. Issue a Pull Request From YOUR fork to our Main branch for evaluation
-
-### Task Details
-We already have code for to retrieve all employees as an example with an example to build upon.
-
-Implement The Following For The Employee Controller:
-  - Get By Id
-  - Create
-  - Update by Id
-  - Delete by Id
-  - Search
-    - id
-    - name
-    - department
-    - behavior to include all logins for the employee
-    - Sort Order On Login Dates (latest first)
-
-The API should follow general RESTful conventions.
-
-
-- Implement Unit Test For in the `test\CRISP.BackendChallenge.Tests` folder (if time permits)
-
-## Things We Are Looking For:
-1. Ability to understand/constrain the problem
-2. Well organized clean code
-3. Thoughtful REST endpoints
-4. Ability to isolate and debug problems as they arise
-5. Familiarity with C#, dotnet, and comfort working within an existing repo
-6. Familiarity and comfort writing tests
