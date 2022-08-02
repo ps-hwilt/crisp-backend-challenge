@@ -1,7 +1,8 @@
 using CRISP.BackendChallenge.Context.Models;
-using CRISP.BackendChallenge.DTO;
+using CRISP.BackendChallenge.Models;
 using CRISP.BackendChallenge.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CRISP.BackendChallenge.Controllers;
 
@@ -23,7 +24,7 @@ public class EmployeeController : ControllerBase
     {
         _logger.LogDebug(":: Performing {MethodName}", nameof(GetAll));
         var result = _repository.Query()
-            .ToList().Select(x => new PersonResponse
+            .ToList().Select(x => new EmployeeResponse
             {
                 Id = x.Id,
                 Name = x.Name,

@@ -3,13 +3,19 @@
 ## Prerequisites
 
 You will need to have git and [dotnet 6 SDK installed](https://dotnet.microsoft.com/en-us/download/dotnet/6.0).
-And ensure that you have an apporpriate eviroment to run on. For example, [VSCode2022](https://visualstudio.microsoft.com/vs/), visual studio code, or Rider.
+And ensure that you have an appropriate environment to run on. For example, [VSCode2022](https://visualstudio.microsoft.com/vs/), visual studio code, or Rider.
 
 
-Note that this code will only run on net6 specifically.
+Note that this code will only run on net6 specifically. Ensure you are not using an older version of dotnet core (2.1, 3.1, 5.0, etc)
 
 ## Background 
-The purpose of this challenge is to demonstrate one's ability to code up a REST API. The web-application can be started with:
+The purpose of this challenge is to demonstrate one's ability to code up a REST API. The web-application is a simple Model-Controller API that currents returns a list of all 
+the available employees. The task here is to build up this new API to include CRUD and a search functionality. There are two tables that which their schema is defined in the SQL below.
+
+### Notes:
+This exercise should take no more than 3 hours but feel free to invest as much time as required to complete the challenge.
+
+
 ```cmd
 dotnet run src/CRISP.BackendChallenge
 ```
@@ -33,24 +39,32 @@ Host: localhost:YOURPORT
 should return:
 ```json
 [
-    {
-        "id": 1,
-        "name": "John Doe",
-        "loginDates": null
-    },
-    {
-        "id": 2,
-        "name": "Jane Doe",
-        "loginDates": null
-    },
-    {
-        "id": 3,
-        "name": "Joe Doe",
-        "loginDates": null
-    }
+  {
+    "id": 1,
+    "name": "John Doe",
+    "loginDates": null
+  },
+  {
+    "id": 2,
+    "name": "Jane Doe",
+    "loginDates": null
+  },
+  {
+    "id": 3,
+    "name": "Joe Doe",
+    "loginDates": null
+  },
+  {
+    "id": 4,
+    "name": "Leroy Jenkins",
+    "loginDates": null
+  }
 ]
 ```
-You may access the swagger endpoint: https://localhost:YOURPORT/swagger/index.html to explore the existing API. 
+
+You may access the swagger endpoint: https://localhost:YOURPORT/swagger/index.html to explore the existing API.
+**Example Of Swagger Page:**
+![img.png](./assets/img.png)
 
 *NOTE*: The port may be different than 7221 depending on how you run the server.
 
@@ -78,11 +92,11 @@ create table Logins
     Id         INTEGER not null
         constraint PK_Logins
             primary key autoincrement,
-    PersonId   INTEGER not null,
-    LoginDate  TEXT    not null,
-    EmployeeId INTEGER
+    EmployeeId INTEGER not null
         constraint FK_Logins_Employees_EmployeeId
             references Employees
+            on delete cascade,
+    LoginDate  TEXT    not null
 );
 
 create index IX_Logins_EmployeeId
@@ -103,8 +117,6 @@ Implement The Following For The Employee Controller:
     - id
     - name
     - department
-    - startDate
-    - endDate
     - behavior to include all logins for the employee
     - Sort Order On Login Dates (latest first)
 

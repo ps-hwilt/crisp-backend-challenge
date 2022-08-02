@@ -3,6 +3,7 @@ using System;
 using CRISP.BackendChallenge.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CRISP.BackendChallenge.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220802121556_Inital")]
+    partial class Inital
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.7");
@@ -26,8 +28,14 @@ namespace CRISP.BackendChallenge.Migrations
                     b.Property<int>("Department")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("StartDate")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -39,19 +47,30 @@ namespace CRISP.BackendChallenge.Migrations
                         {
                             Id = 1,
                             Department = 1,
-                            Name = "John Doe"
+                            Name = "John Doe",
+                            StartDate = new DateTime(2019, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = 2,
                             Department = 2,
-                            Name = "Jane Doe"
+                            Name = "Jane Doe",
+                            StartDate = new DateTime(2016, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = 3,
                             Department = 1,
-                            Name = "Joe Doe"
+                            Name = "Joe Doe",
+                            StartDate = new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Department = 1,
+                            EndDate = new DateTime(2019, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Leroy Jenkins",
+                            StartDate = new DateTime(2006, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
 
@@ -78,37 +97,37 @@ namespace CRISP.BackendChallenge.Migrations
                         {
                             Id = 1,
                             EmployeeId = 1,
-                            LoginDate = new DateTime(2022, 7, 2, 7, 21, 42, 195, DateTimeKind.Local).AddTicks(6415)
+                            LoginDate = new DateTime(2022, 7, 2, 8, 15, 55, 879, DateTimeKind.Local).AddTicks(2166)
                         },
                         new
                         {
                             Id = 2,
                             EmployeeId = 1,
-                            LoginDate = new DateTime(2022, 6, 2, 7, 21, 42, 195, DateTimeKind.Local).AddTicks(6442)
+                            LoginDate = new DateTime(2022, 6, 2, 8, 15, 55, 879, DateTimeKind.Local).AddTicks(2195)
                         },
                         new
                         {
                             Id = 3,
                             EmployeeId = 1,
-                            LoginDate = new DateTime(2022, 5, 2, 7, 21, 42, 195, DateTimeKind.Local).AddTicks(6443)
+                            LoginDate = new DateTime(2022, 5, 2, 8, 15, 55, 879, DateTimeKind.Local).AddTicks(2197)
                         },
                         new
                         {
                             Id = 4,
                             EmployeeId = 2,
-                            LoginDate = new DateTime(2022, 7, 2, 7, 21, 42, 195, DateTimeKind.Local).AddTicks(6445)
+                            LoginDate = new DateTime(2022, 7, 2, 8, 15, 55, 879, DateTimeKind.Local).AddTicks(2199)
                         },
                         new
                         {
                             Id = 5,
                             EmployeeId = 2,
-                            LoginDate = new DateTime(2022, 6, 2, 7, 21, 42, 195, DateTimeKind.Local).AddTicks(6447)
+                            LoginDate = new DateTime(2022, 6, 2, 8, 15, 55, 879, DateTimeKind.Local).AddTicks(2200)
                         },
                         new
                         {
                             Id = 6,
                             EmployeeId = 3,
-                            LoginDate = new DateTime(2022, 7, 2, 7, 21, 42, 195, DateTimeKind.Local).AddTicks(6449)
+                            LoginDate = new DateTime(2022, 7, 2, 8, 15, 55, 879, DateTimeKind.Local).AddTicks(2202)
                         });
                 });
 

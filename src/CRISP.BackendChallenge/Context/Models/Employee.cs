@@ -23,6 +23,16 @@ public class Employee : BaseEntity
     public Department Department { get; set; }
 
     /// <summary>
+    /// The date which the employee was hired
+    /// </summary>
+    public DateTime? StartDate { get; set; }
+
+    /// <summary>
+    /// The date in which the employee was terminated
+    /// </summary>
+    public DateTime? EndDate { get; set; }
+
+    /// <summary>
     /// Navigation property to the logins of the person
     /// </summary>
     public virtual ICollection<Login> Logins { get; set; }

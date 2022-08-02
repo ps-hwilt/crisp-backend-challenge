@@ -9,7 +9,9 @@
 *.userosscache
 *.sln.docstates
 appsettings.*.json
-
+*.db
+*.db-shm
+*db-wal
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -299,3 +301,9 @@ sleet.json
 
 **/*/CRISP.PanelProcessor/Controllers/TestController.cs
 /src/CRISP.BackendChallenge/MyDatabase.db
+
+**/*/App*
+
+/src/CRISP.BackendChallenge/App.db
+/src/CRISP.BackendChallenge/App.db-shm
+/src/CRISP.BackendChallenge/App.db-wal
