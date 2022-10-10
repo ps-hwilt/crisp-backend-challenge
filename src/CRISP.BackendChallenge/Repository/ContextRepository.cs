@@ -1,5 +1,6 @@
 using CRISP.BackendChallenge.Context;
 using CRISP.BackendChallenge.Context.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CRISP.BackendChallenge.Repository;
 
@@ -30,26 +31,33 @@ public class ContextRepository<T> : IRepository<T> where T : BaseEntity
     }
 
     /// <inheritdoc />
-    public void Add(T entity)
+    public T Add(T entity)
     {
-        throw new NotImplementedException();
+        _context.Add<T>(entity);
+        _context.SaveChanges();
+
+        return entity;
     }
 
     /// <inheritdoc />
     public void Delete(T entity)
     {
-        throw new NotImplementedException();
+        _context.Entry(entity).State = EntityState.Deleted;
+        _context.SaveChanges();
     }
 
     /// <inheritdoc />
-    public void Update(T entity)
+    public T Update(T entity)
     {
-        throw new NotImplementedException();
+       _context.Entry(entity).State = EntityState.Modified;
+        _context.SaveChanges();
+
+        return entity;
     }
 
     /// <inheritdoc />
     public void Save()
     {
-        throw new NotImplementedException();
+        _context.SaveChanges();
     }
 }
