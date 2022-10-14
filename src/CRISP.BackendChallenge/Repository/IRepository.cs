@@ -34,7 +34,7 @@ namespace CRISP.BackendChallenge.Repository
         /// </summary>
         /// <param name="entity"></param>
         /// <typeparam name="T"></typeparam>
-        void Add(T entity);
+        T Add(T entity);
 
         /// <summary>
         /// Delete an entity from the database.
@@ -48,7 +48,7 @@ namespace CRISP.BackendChallenge.Repository
         /// </summary>
         /// <param name="entity"></param>
         /// <typeparam name="T"></typeparam>
-        void Update(T entity);
+        T Update(T entity);
 
         /// <summary>
         /// Save the changes to the database.

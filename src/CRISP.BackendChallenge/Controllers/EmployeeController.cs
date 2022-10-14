@@ -19,7 +19,7 @@ public class EmployeeController : ControllerBase
         _repository = repository;
     }
 
-    [HttpGet]
+    [HttpGet("~/GetAll")]
     public IActionResult GetAll()
     {
         _logger.LogDebug(":: Performing {MethodName}", nameof(GetAll));
@@ -28,12 +28,75 @@ public class EmployeeController : ControllerBase
             {
                 Id = x.Id,
                 Name = x.Name,
-                // TODO: Include the login date information...
-                LoginDates = null
+                LoginDates = x.Logins.Select(x => x.LoginDate).ToList()
             });
         return Ok(result);
     }
-    // TODO: Implement Search By Id
-    // TODO: Implement Delete by Id
-    // TODO: Implement Update by Id
+
+    [HttpGet("~/GetById")]
+    public IActionResult GetById(int id)
+    {
+        _logger.LogDebug(":: Performing {MethodName}", nameof(GetById));
+
+        var result = _repository.Query()
+        .Where(x => x.Id == id)
+        .Select(MapResult);
+
+        return Ok(result);
+    }
+
+    [HttpPost("~/Create")]
+    public IActionResult Create(Employee employee)
+    {
+        _logger.LogDebug(":: Performing {MethodName}", nameof(Create));
+
+        var result = MapResult(_repository.Add(employee));
+
+        return Ok(result);
+    }
+
+    [HttpPut("~/Update")]
+    public IActionResult Update(Employee employee)
+    {
+        _logger.LogDebug(":: Performing {MethodName}", nameof(Update));
+        
+        var result = MapResult(_repository.Update(employee));
+
+        return Ok(result);
+    }
+
+    [HttpDelete("~/Delete")]
+    public IActionResult Delete(Employee employee)
+    {
+        _logger.LogDebug(":: Performing {MethodName}", nameof(Delete));
+        
+        _repository.Delete(employee);
+
+        return Ok();
+    }
+
+    [HttpGet("~/Search")]
+    public IActionResult Search(int? id = null, string? name = null, int? department = null)
+    {
+        _logger.LogDebug(":: Performing {MethodName}", nameof(Search));
+
+        var result = _repository.Query()
+            .Where(x => (id.HasValue && x.Id == id)
+            || (!string.IsNullOrEmpty(name) && x.Name == name)
+            || (department.HasValue && x.Department == (Department)department))
+            .Select(MapResult);
+
+        return Ok(result);
+    }
+    
+
+    private EmployeeResponse MapResult(Employee employee)
+    {
+        return new EmployeeResponse
+        {
+            Id = employee.Id,
+            Name = employee.Name,
+            LoginDates = employee.Logins.OrderByDescending(l => l.LoginDate).Select(employee => employee.LoginDate).ToList()
+        };
+    }
 }
