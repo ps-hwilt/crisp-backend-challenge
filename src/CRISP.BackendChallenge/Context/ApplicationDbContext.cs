@@ -8,12 +8,12 @@ public class ApplicationDbContext : DbContext
     /// <summary>
     /// Person table accessor
     /// </summary>
-    public DbSet<Employee> Employees { get; set; }
+    public DbSet<Employee> Employees { get; set; } = null!;
 
     /// <summary>
     /// Login table accessor
     /// </summary>
-    public DbSet<Login> Logins { get; set; }
+    public DbSet<Login> Logins { get; set; } = null!;
 
     /// <summary>
     /// Default Constructor

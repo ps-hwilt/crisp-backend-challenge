@@ -1,5 +1,6 @@
 using CRISP.BackendChallenge.Context;
 using CRISP.BackendChallenge.Context.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CRISP.BackendChallenge.Repository;
 
@@ -18,38 +19,69 @@ public class ContextRepository<T> : IRepository<T> where T : BaseEntity
     }
 
     /// <inheritdoc />
-    public IEnumerable<T> GetAll()
+    public IEnumerable<Employee> GetAll()
     {
-        throw new NotImplementedException();
+        var entities = _context.Employees.Include(e => e.Logins).ToList();
+        if (entities == null)
+        {
+            throw new ArgumentNullException();
+        }
+
+        return entities;
     }
 
     /// <inheritdoc />
-    public T GetById(int id)
+    public Employee GetById(int id)
     {
-        throw new NotImplementedException();
+        var entity = _context.Employees
+            .Include(e => e.Logins)
+            .FirstOrDefault(e => e.Id == id);
+        if (entity == null)
+        {
+            throw new ArgumentNullException(nameof(id));
+        }
+        return entity;
     }
 
+    /// <exception cref="ArgumentNullException"></exception>
     /// <inheritdoc />
     public void Add(T entity)
     {
-        throw new NotImplementedException();
+        if (entity == null)
+        {
+            throw new ArgumentNullException(nameof(entity));
+        }
+        _context.Add(entity);
+        Save();
     }
 
+    /// <exception cref="ArgumentNullException"></exception>
     /// <inheritdoc />
     public void Delete(T entity)
     {
-        throw new NotImplementedException();
+        if (entity == null)
+        {
+            throw new ArgumentNullException(nameof(entity));
+        }
+        _context.Remove(entity);
+        Save();
     }
 
+    /// <exception cref="ArgumentNullException"></exception>
     /// <inheritdoc />
     public void Update(T entity)
     {
-        throw new NotImplementedException();
+        if (entity == null)
+        {
+            throw new ArgumentNullException(nameof(entity));
+        }
+        _context.Update(entity);
+        Save();
     }
 
     /// <inheritdoc />
     public void Save()
     {
-        throw new NotImplementedException();
+        _context.SaveChanges();
     }
 }

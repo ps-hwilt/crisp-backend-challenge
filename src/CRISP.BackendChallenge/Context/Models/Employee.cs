@@ -15,7 +15,7 @@ public class Employee : BaseEntity
     /// <summary>
     /// Name of the person
     /// </summary>
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     /// <summary>
     /// The department of the person
