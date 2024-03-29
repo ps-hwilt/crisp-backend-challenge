@@ -1,6 +1,8 @@
 using CRISP.BackendChallenge.Context.Models;
+using CRISP.BackendChallenge.Filters;
 using CRISP.BackendChallenge.Models;
 using CRISP.BackendChallenge.Repository;
+using CRISP.BackendChallenge.Constants;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,17 +10,16 @@ namespace CRISP.BackendChallenge.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[TypeFilter(typeof(ExceptionFilter))]
 public class EmployeeController : ControllerBase
 {
     private readonly ILogger<EmployeeController> _logger;
     private readonly IRepository<Employee> _employeeRepository;
-    private readonly IRepository<Login> _loginRepository;
 
-    public EmployeeController(ILogger<EmployeeController> logger, IRepository<Employee> employeeRepository, IRepository<Login> loginRepository)
+    public EmployeeController(ILogger<EmployeeController> logger, IRepository<Employee> employeeRepository)
     {
         _logger = logger;
         _employeeRepository = employeeRepository;
-        _loginRepository = loginRepository;
     }
 
     [HttpGet]
@@ -26,25 +27,19 @@ public class EmployeeController : ControllerBase
     public IActionResult GetAll()
     {
         _logger.LogDebug(":: Performing {MethodName}", nameof(GetAll));
-            
-        try
-        {
-            var employees = _employeeRepository.GetAll();
 
-            var result = employees.Select(ToEmployeeResponse);
+        var employees = _employeeRepository.GetAll();
 
-            return Ok(result);
-        }
-        catch (ArgumentNullException e)
+        if (employees == null!) return NotFound(new { error = ErrorConstants.EmployeesNotFound });
+
+        var result = employees.Select(x => new EmployeeResponse
         {
-            _logger.LogDebug(":: There are no Employees in the Database: {EMessage}", e.Message);
-            return NotFound(new {error = "No Employees Found in Database"});
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(":: Error occurred while getting all employees: {EMessage}", e.Message);
-            return CreateInternalServerError();
-        }
+            Id = x.Id,
+            Name = x.Name,
+            LoginDates = x.Logins.Select(l => l.LoginDate).ToList()
+        }).ToList();
+
+        return Ok(result);
     }
 
     [HttpGet]
@@ -52,157 +47,123 @@ public class EmployeeController : ControllerBase
     public IActionResult GetById(int id)
     {
         _logger.LogDebug(":: Performing {MethodName} with ID {Id}", nameof(GetById), id);
-        try
+
+        var employee = _employeeRepository.GetById(id);
+        
+        if (employee == null!) return CreateNotFound(id);
+        
+        return Ok(new EmployeeResponse
         {
-            var employee = _employeeRepository.GetById(id);
-            return Ok(ToEmployeeResponse(employee));
-        }
-        catch (ArgumentNullException e)
-        {
-            _logger.LogDebug(":: Id Not Found: {Id}, {EMessage}", id, e.Message);
-            return CreateNotFound(id);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(":: Error occurred while getting employee ID: {Id} {EMessage}", id, e.Message);
-            return CreateInternalServerError();
-        }
+            Id = employee.Id,
+            Name = employee.Name,
+            LoginDates = employee.Logins.Select(l => l.LoginDate).ToList()
+        });
     }
     
     
     [HttpPost]
     [Route("createEmployee")]
+    [TypeFilter(typeof(EmployeeModelStateFilter))]
     public IActionResult AddEmployee([FromBody] EmployeeRequest employeeRequest)
     {
         _logger.LogDebug(":: Performing {MethodName}", nameof(AddEmployee));
-        
-        if (string.IsNullOrWhiteSpace(employeeRequest.Name))
-        {
-            _logger.LogError(":: Invalid EmployeeRequest provided");
-            return CreateBadRequest("Creating an employee", "Name field required");
-        }
-        if (employeeRequest.Department == null)
-        {
-            _logger.LogError(":: Invalid EmployeeRequest provided");
-            return CreateBadRequest("Creating an employee", "Department field required");
-        }
-        
-        try
-        {
-            
-            var employee = new Employee
-            {
-                Name = employeeRequest.Name,
-                Department = (Department)employeeRequest.Department,
-                StartDate = employeeRequest.StartDate,
-                EndDate = employeeRequest.EndDate
-            };
 
-            _employeeRepository.Add(employee);
-            _employeeRepository.Save();
-
-            if (employeeRequest.LoginDates != null || employeeRequest.LoginDates!.Any())
-            {
-                foreach (var login in employeeRequest.LoginDates!.Select(l => new Login()
-                         {
-                             EmployeeId = employee.Id,
-                             LoginDate = l
-                         }))
-                {
-                    _loginRepository.Add(login);
-                }
-                _loginRepository.Save();
-            }
-            
-            return Ok(ToEmployeeResponse(employee));
-        }
-        catch (Exception e)
+        var logins = employeeRequest.LoginDates?.Select(loginDate => new Login {
+            LoginDate = loginDate
+        }).ToList();
+        
+        var employee = new Employee
         {
-            _logger.LogError(":: Error occurred while creating employee: {EMessage}", e.Message);
-            return CreateInternalServerError();
-        }
+            Name = employeeRequest.Name!,
+            Department = (Department)employeeRequest.Department!,
+            StartDate = employeeRequest.StartDate,
+            EndDate = employeeRequest.EndDate,
+            Logins = logins!
+        };
+
+        _employeeRepository.Add(employee);
+        
+        return Ok(new EmployeeResponse
+        {
+            Id = employee.Id,
+            Name = employee.Name,
+            LoginDates = employee.Logins.Select(l => l.LoginDate).ToList()
+        });
     }
 
     
     [HttpGet]
     [Route("search")]
-    public IActionResult SearchEmployees(int? id, string? name, int? department)
+    public IActionResult SearchEmployees(string? name, int? department)
     {
         _logger.LogDebug(":: Performing {MethodName}", nameof(SearchEmployees));
 
-        try
-        {
-            if (id == null && string.IsNullOrWhiteSpace(name) && department == null)
-            {
-                var employees = _employeeRepository.GetAll();
+        var query = _employeeRepository.Query();
+        
+        if (!string.IsNullOrWhiteSpace(name))
+            query = query.Where(x => x.Name == name);
 
-                var res = employees.Select(ToEmployeeResponse);
+        if (department.HasValue)
+            query = query.Where(x => x.Department == (Department)department);
 
-                return Ok(res);
-            }
-            
-            var result = _employeeRepository.Query().Include(e => e.Logins)
-                .Where(x => (id.HasValue && x.Id == id) || (!string.IsNullOrEmpty(name) && x.Name == name) ||
-                            (department.HasValue && x.Department == (Department)department))
-                .Select(x => ToEmployeeResponse(x)).ToList();
-            
-            return Ok(result);
-        }
-        catch (Exception e)
+        
+        query = query.Include(e => e.Logins);
+        
+        var result = query.Select(x => new EmployeeResponse
         {
-            _logger.LogError(":: Error occurred while searching employees: {EMessage}", e.Message);
-            return CreateInternalServerError();
-        }
+            Id = x.Id,
+            Name = x.Name,
+            LoginDates = x.Logins.Select(l => l.LoginDate).ToList()
+        }).ToList();
+        
+        return Ok(result);
+    
         
     }
     
     
     [HttpPut]
     [Route("update/{id:int}")]
-    public IActionResult UpdatedById(int id,[FromBody] EmployeeRequest employeeRequest)
+    [TypeFilter(typeof(EmployeeModelStateFilter))]
+    public IActionResult UpdatedById(int id,[FromBody] EmployeeRequest employeeRequest) 
     {
         _logger.LogDebug(":: Performing {MethodName} with ID {Id}", nameof(UpdatedById), id);
         
         try
         {
-           
-            var existingEmployee = _employeeRepository.GetById(id);
+            var logins = employeeRequest.LoginDates?.Select(loginDate => new Login {
+                EmployeeId = id,
+                LoginDate = loginDate
+            }).ToList();
             
-            existingEmployee.Name = employeeRequest.Name ?? existingEmployee.Name;
-            if (employeeRequest.Department != null)
+            var employee = new Employee
             {
-                existingEmployee.Department = (Department)employeeRequest.Department;
-            }
-            existingEmployee.StartDate = employeeRequest.StartDate;
-            existingEmployee.EndDate = employeeRequest.EndDate;
+                Id = id,
+                Name = employeeRequest.Name!,
+                Department = (Department)employeeRequest.Department!,
+                StartDate = employeeRequest.StartDate,
+                EndDate = employeeRequest.EndDate,
+                Logins = logins!
+            };
             
-            _employeeRepository.Update(existingEmployee);
-            _employeeRepository.Save();
-            
-            if (employeeRequest.LoginDates != null)
-            {
-                foreach (var login in employeeRequest.LoginDates.Select(l => new Login()
-                         {
-                             EmployeeId = existingEmployee.Id,
-                             LoginDate = l
-                         }))
-                {
-                    _loginRepository.Add(login);
-                }
-                _loginRepository.Save();
-            }
+            var updatedEmployee = _employeeRepository.Update(employee);
 
-            return Ok(ToEmployeeResponse(existingEmployee));
+            return Ok(new EmployeeResponse
+            {
+                Id = updatedEmployee.Id,
+                Name = updatedEmployee.Name,
+                LoginDates = updatedEmployee.Logins.Select(l => l.LoginDate).ToList()
+            });
+        }
+        catch (KeyNotFoundException e)
+        {
+            _logger.LogDebug(":: Employee Not Found: {Id}, {EMessage}", id, e.Message);
+            return CreateNotFound(id);
         }
         catch (ArgumentNullException e)
         {
             _logger.LogDebug(":: Employee Not Found: {Id}, {EMessage}", id, e.Message);
             return CreateNotFound(id);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(":: Error occurred while updating employee with ID {Id}: {EMessage}", id, e.Message);
-            return CreateInternalServerError();
         }
     }
     
@@ -212,61 +173,21 @@ public class EmployeeController : ControllerBase
     public IActionResult DeleteById(int id)
     {
         _logger.LogDebug(":: Performing {MethodName} with ID {Id}", nameof(DeleteById), id);
-        try
-        {
-            var employee = _employeeRepository.GetById(id);
-            
-            
-            var loginDates = _loginRepository.Query().Where(l => l.EmployeeId == id).ToList();
-            foreach (Login login in loginDates)
-            {
-                _loginRepository.Delete(login);
-                _loginRepository.Save();
-            }
 
-            _employeeRepository.Delete(employee);
-            _employeeRepository.Save();
+        var employee = _employeeRepository.GetById(id);
+        
+        if (employee == null!) return CreateNotFound(id);
+        
+        _employeeRepository.Delete(employee);
 
-            return NoContent();
-        }
-        catch (ArgumentNullException e)
-        {
-            _logger.LogDebug(":: Employee Not Found: {Id}, {EMessage}", id, e.Message);
-            return NotFound(new {error = "Employee Not Found", Id = id});
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(":: Error occurred while deleting employee with ID {Id}: {EMessage}", id, e.Message);
-            return CreateInternalServerError();
-        }
+        return NoContent();
+        
     }
     
-
-    private static EmployeeResponse ToEmployeeResponse(Employee employee)
-    {
-        return new EmployeeResponse
-        {
-            Id = employee.Id,
-            Name = employee.Name,
-            LoginDates = employee.Logins.Where(login => login.EmployeeId == employee.Id)
-                .Select(login => login.LoginDate)
-                .ToList()
-        };
-    }
-
-    private ObjectResult CreateInternalServerError()
-    {
-        return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while processing your request" });
-    }
-
-    private BadRequestObjectResult CreateBadRequest(string error, string reason)
-    {
-        return BadRequest(new { error, reason});
-    }
-
+    
     private NotFoundObjectResult CreateNotFound(int id)
     {
-        return NotFound(new {error = "Employee Not Found", Id = id});
+        return NotFound(new {error = ErrorConstants.EmployeeNotFound, Id = id});
     }
     
 }

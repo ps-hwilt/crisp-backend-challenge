@@ -1,5 +1,7 @@
 using CRISP.BackendChallenge.Context;
+using CRISP.BackendChallenge.Filters;
 using CRISP.BackendChallenge.Repository;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace CRISP.BackendChallenge;
@@ -16,11 +18,26 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         // Add services to the container.
-        services.AddControllers();
+        services.AddControllers(options =>
+        {
+            options.Filters.Add<ExceptionFilter>();
+            options.Filters.Add<EmployeeModelStateFilter>();
+        })
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.ReferenceHandler =
+                System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        });
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
         services.AddEntityFrameworkSqlite().AddDbContext<ApplicationDbContext>();
         services.AddTransient(typeof(IRepository < >), typeof(ContextRepository< >));
+        services.Configure<ApiBehaviorOptions>(options =>
+        {
+            options.SuppressModelStateInvalidFilter = true;
+        });
+        
+        services.AddScoped<EmployeeModelStateFilter>();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

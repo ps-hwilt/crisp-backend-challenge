@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace CRISP.BackendChallenge.Models;
 
 public class EmployeeRequest
@@ -5,11 +7,13 @@ public class EmployeeRequest
     /// <summary>
     /// Name of the person
     /// </summary>
+    [Required]
     public string? Name { get; set; }
 
     /// <summary>
     /// The department of the person
     /// </summary>
+    [Required]
     public int? Department { get; set; }
 
     /// <summary>

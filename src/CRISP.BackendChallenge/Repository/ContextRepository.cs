@@ -19,28 +19,28 @@ public class ContextRepository<T> : IRepository<T> where T : BaseEntity
     }
 
     /// <inheritdoc />
-    public IEnumerable<Employee> GetAll()
+    public IEnumerable<T> GetAll()
     {
         var entities = _context.Employees.Include(e => e.Logins).ToList();
-        if (entities == null)
+        if (entities == null!)
         {
-            throw new ArgumentNullException();
+            return null!;
         }
 
-        return entities;
+        return (entities as IEnumerable<T>)!;
     }
 
     /// <inheritdoc />
-    public Employee GetById(int id)
+    public T GetById(int id)
     {
-        var entity = _context.Employees
+        Employee? entity = _context.Employees
             .Include(e => e.Logins)
             .FirstOrDefault(e => e.Id == id);
         if (entity == null)
         {
-            throw new ArgumentNullException(nameof(id));
+            return null!;
         }
-        return entity;
+        return (entity as T)!;
     }
 
     /// <exception cref="ArgumentNullException"></exception>
@@ -69,14 +69,44 @@ public class ContextRepository<T> : IRepository<T> where T : BaseEntity
 
     /// <exception cref="ArgumentNullException"></exception>
     /// <inheritdoc />
-    public void Update(T entity)
+    public T Update(T entity)
     {
         if (entity == null)
         {
             throw new ArgumentNullException(nameof(entity));
         }
-        _context.Update(entity);
+        
+        var existingEntity = _context.Employees
+            .Include(e => e.Logins)
+            .FirstOrDefault(x => x.Id == entity.Id);
+
+        if (existingEntity == null)
+        {
+            throw new KeyNotFoundException($"Entity with ID {entity.Id} not found.");
+        }
+        
+        _context.Entry(existingEntity).CurrentValues.SetValues(entity);
+
+        UpdateLogins(existingEntity, entity);
+        
         Save();
+
+        return (existingEntity as T)!;
+    }
+
+    private void UpdateLogins(Employee existingEntity, T updatedEntity)
+    {
+        if (updatedEntity is Employee updatedEmployeeEntity)
+        {
+            if (updatedEmployeeEntity.Logins != null!)
+            {
+                foreach (var login in updatedEmployeeEntity.Logins)
+                {
+                    existingEntity.Logins.Add(login);
+                }
+            }
+        }
+        
     }
 
     /// <inheritdoc />

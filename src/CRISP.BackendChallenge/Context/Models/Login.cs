@@ -14,4 +14,6 @@ public class Login : BaseEntity
     /// Login Date
     /// </summary>
     public DateTime LoginDate { get; set; }
+    
+    public Employee? Employee { get; set; }
 }

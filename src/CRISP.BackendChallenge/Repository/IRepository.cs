@@ -19,7 +19,7 @@ namespace CRISP.BackendChallenge.Repository
         /// </summary>
         /// <typeparam name="T">The type of entity</typeparam>
         /// <returns>An enumerable of the Entity Type</returns>
-        IEnumerable<Employee> GetAll();
+        IEnumerable<T> GetAll();
 
         /// <summary>
         /// Get an instance of the Entity by Id.
@@ -27,7 +27,7 @@ namespace CRISP.BackendChallenge.Repository
         /// <param name="id"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        Employee GetById(int id);
+        T GetById(int id);
 
         /// <summary>
         /// Add an entity to the database.
@@ -48,7 +48,8 @@ namespace CRISP.BackendChallenge.Repository
         /// </summary>
         /// <param name="entity"></param>
         /// <typeparam name="T"></typeparam>
-        void Update(T entity);
+        /// <returns></returns>
+        T Update(T entity);
 
         /// <summary>
         /// Save the changes to the database.

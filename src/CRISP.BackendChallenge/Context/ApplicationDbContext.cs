@@ -72,5 +72,11 @@ public class ApplicationDbContext : DbContext
             {
                 Id = 6, EmployeeId = 3, LoginDate = DateTime.Now.AddMonths(-1)
             });
+        
+        modelBuilder.Entity<Employee>()
+            .HasMany(e => e.Logins)
+            .WithOne(l => l.Employee)
+            .HasForeignKey(l => l.EmployeeId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
