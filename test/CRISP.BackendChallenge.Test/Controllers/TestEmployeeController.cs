@@ -18,19 +18,17 @@ namespace CRISP.BackendChallenge.Test.Controllers;
 public class TestEmployeeController
 {
     private readonly Mock<IRepository<Employee>> _employeeRepository;
-    private readonly Mock<IRepository<Login>> _loginsRepository;
     private readonly Mock<ILogger<EmployeeController>> _logger;
 
     public TestEmployeeController()
     {
         _employeeRepository = new Mock<IRepository<Employee>>();
-        _loginsRepository = new Mock<IRepository<Login>>();
         _logger = new Mock<ILogger<EmployeeController>>();
     }
 
     private EmployeeController CreateEmployeeController()
     {
-        return new EmployeeController(_logger.Object, _employeeRepository.Object, _loginsRepository.Object);
+        return new EmployeeController(_logger.Object, _employeeRepository.Object);
     }
     
     [Fact]
@@ -46,7 +44,7 @@ public class TestEmployeeController
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(200, okResult.StatusCode);
-        var employees = Assert.IsAssignableFrom<IEnumerable<EmployeeResponse>>(okResult.Value);
+        var employees = Assert.IsAssignableFrom<List<EmployeeResponse>>(okResult.Value);
         Assert.Equal(3, employees.Count());
     }
 
@@ -55,7 +53,7 @@ public class TestEmployeeController
     {
         // Arrange
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetAll()).Throws<ArgumentNullException>();
+        _employeeRepository.Setup(x => x.GetAll()).Returns((IEnumerable<Employee>)null!);
         
         // Act
         var result = controller.GetAll();
@@ -82,8 +80,7 @@ public class TestEmployeeController
         var employee = Assert.IsAssignableFrom<EmployeeResponse>(okResult.Value);
         Assert.Equal("Test Employee", employee.Name);
         Debug.Assert(employee.LoginDates != null, "employee.LoginDates != null");
-        // In practice, it returns 2 login dates
-        //Assert.Equal(2, employee.LoginDates.Count);
+        Assert.Equal(2, employee.LoginDates.Count);
         
     }
     
@@ -92,7 +89,7 @@ public class TestEmployeeController
     {
         // Arrange
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(0)).Throws<ArgumentNullException>();
+        _employeeRepository.Setup(x => x.GetById(0)).Returns((Employee)null!);
         
         // Act
         var result = controller.GetById(0);
@@ -108,7 +105,7 @@ public class TestEmployeeController
     {
         // Arrange
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.Query()).Throws<Exception>();
+        _employeeRepository.Setup(x => x.GetById(1)).Throws<Exception>();
         
         // Act
         var result = controller.GetById(1);
@@ -135,8 +132,7 @@ public class TestEmployeeController
         Assert.Equal("Test Employee", employeeResponse.Name);
         Assert.Equal(0, employeeResponse.Id);
         Debug.Assert(employeeResponse.LoginDates != null, "employeeResponse.LoginDates != null");
-        // In practice it does return the two login dates
-        //Assert.Equal(2, employeeResponse.LoginDates.Count);
+        Assert.Equal(2, employeeResponse.LoginDates.Count);
     }
 
     [Fact]
@@ -152,7 +148,7 @@ public class TestEmployeeController
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequestResult.StatusCode);
         Debug.Assert(badRequestResult.Value != null, "badRequestResult.Value != null");
-        Assert.Contains("Creating an employee", badRequestResult.Value.ToString()!);
+        Assert.Contains("Invalid Model", badRequestResult.Value.ToString()!);
         Assert.Contains("Name field required", badRequestResult.Value.ToString()!);
     }
     
@@ -168,8 +164,8 @@ public class TestEmployeeController
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequestResult.StatusCode);
-        Debug.Assert(badRequestResult.Value != null, "badRequestResult.Value != null");
-        Assert.Contains("Creating an employee", badRequestResult.Value.ToString()!);
+        //Debug.Assert(badRequestResult.Value != null, "badRequestResult.Value != null");
+        Assert.Contains("Invalid Model", badRequestResult.Value!.ToString()!);
         Assert.Contains("Department field required", badRequestResult.Value.ToString()!);
     }
     
@@ -178,7 +174,7 @@ public class TestEmployeeController
     {
         // Arrange
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.Save()).Throws<Exception>();
+        _employeeRepository.Setup(x => x.Add(EmployeeLoginDates())).Throws<Exception>();
         
         // Act
         var result = controller.AddEmployee(EmployeeRequest());
@@ -189,21 +185,6 @@ public class TestEmployeeController
         Assert.Contains("An error occurred while processing your request", internalServerResult.Value!.ToString()!);
     }
     
-    [Fact]
-    public void AddEmployee_ReturnsInternalServerError_LoginRepository()
-    {
-        // Arrange
-        var controller = CreateEmployeeController();
-        _loginsRepository.Setup(x => x.Save()).Throws<Exception>();
-        
-        // Act
-        var result = controller.AddEmployee(EmployeeRequest());
-        
-        // Assert
-        var internalServerResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, internalServerResult.StatusCode);
-        Assert.Contains("An error occurred while processing your request", internalServerResult.Value!.ToString()!);
-    }
 
     [Fact]
     public void DeleteEmployee_ReturnsNoContent()
@@ -225,7 +206,7 @@ public class TestEmployeeController
     {
         // Arrange
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(10)).Throws<ArgumentNullException>();
+        _employeeRepository.Setup(x => x.GetById(10)).Returns((Employee)null!);
         
         // Act
         var result = controller.DeleteById(10);
@@ -234,22 +215,7 @@ public class TestEmployeeController
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal(404, notFoundResult.StatusCode);
     }
-
-    [Fact]
-    public void DeleteEmployee_ReturnsInternalServerError_LoginRepository()
-    {
-        // Arrange
-        var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(1)).Returns(Employee());
-        _loginsRepository.Setup(x => x.Query()).Throws<Exception>();
-        
-        // Act
-        var result = controller.DeleteById(1);
-        
-        // Assert
-        var internalServerResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, internalServerResult.StatusCode);
-    }
+    
     
     [Fact]
     public void DeleteEmployee_ReturnsInternalServerError_EmployeeRepository()
@@ -265,25 +231,6 @@ public class TestEmployeeController
         var internalServerResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(500, internalServerResult.StatusCode);
     }
-    
-    [Fact]
-    public void SearchEmployees_WithId_ReturnsOkResult()
-    {
-        // Arrange
-        var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.Query()).Returns(GetAllEmployees);
-        const int id = 1;
-
-        // Act
-        var result = controller.SearchEmployees(id, null, null);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal(200, okResult.StatusCode);
-        var employees = Assert.IsAssignableFrom<IEnumerable<EmployeeResponse>>(okResult.Value);
-        Assert.Single(employees);
-
-    }
 
     [Fact]
     public void SearchEmployees_WithName_ReturnsOkResult()
@@ -294,7 +241,7 @@ public class TestEmployeeController
         const string name = "Test Employee 2";
 
         // Act
-        var result = controller.SearchEmployees(null, name, null);
+        var result = controller.SearchEmployees(name, null);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -312,7 +259,7 @@ public class TestEmployeeController
         const int department = 1;
 
         // Act
-        var result = controller.SearchEmployees(null, null, department);
+        var result = controller.SearchEmployees(null, department);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -326,10 +273,10 @@ public class TestEmployeeController
     {
         // Arrange
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetAll()).Returns(GetAllEmployees);
+        _employeeRepository.Setup(x => x.Query()).Returns(GetAllEmployees);
 
         // Act
-        var result = controller.SearchEmployees(null, null, null);
+        var result = controller.SearchEmployees(null, null);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -346,7 +293,7 @@ public class TestEmployeeController
         _employeeRepository.Setup(x => x.GetAll()).Throws<Exception>();
 
         // Act
-        var result = controller.SearchEmployees(null, null, null);
+        var result = controller.SearchEmployees(null, null);
 
         // Assert
         var internalServerErrorResult = Assert.IsType<ObjectResult>(result);
@@ -359,10 +306,10 @@ public class TestEmployeeController
         // Arrange
         const int id = 0;
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(id)).Returns(EmployeeLoginDates());
+        _employeeRepository.Setup(x => x.Update(Employee())).Returns(EmployeeLoginDates());
         
         // Act
-        var result = controller.UpdatedById(id, UpdateEmployeeRequest());
+        var result = controller.UpdatedById(id, EmployeeRequest());
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -371,8 +318,7 @@ public class TestEmployeeController
         Assert.Equal("Updated Name", employeeResponse.Name);
         Assert.Equal(0, employeeResponse.Id);
         Debug.Assert(employeeResponse.LoginDates != null, "employeeResponse.LoginDates != null");
-        // In practice it does return the three login dates
-        //Assert.Equal(3, employeeResponse.LoginDates.Count);
+        Assert.Equal(2, employeeResponse.LoginDates.Count);
     }
     
     [Fact]
@@ -384,7 +330,7 @@ public class TestEmployeeController
         _employeeRepository.Setup(x => x.GetById(id)).Throws<ArgumentNullException>();
         
         // Act
-        var result = controller.UpdatedById(id, UpdateEmployeeRequest());
+        var result = controller.UpdatedById(id, EmployeeRequest());
         
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
@@ -402,25 +348,7 @@ public class TestEmployeeController
         _employeeRepository.Setup(x => x.Save()).Throws<Exception>();
         
         // Act
-        var result = controller.UpdatedById(id, UpdateEmployeeRequest());
-        
-        // Assert
-        var internalServerResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, internalServerResult.StatusCode);
-        Assert.Contains("An error occurred while processing your request", internalServerResult.Value!.ToString()!);
-    }
-    
-    [Fact]
-    public void UpdateEmployee_ReturnsInternalServerError_LoginRepository()
-    {
-        // Arrange
-        const int id = 0;
-        var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(id)).Returns(EmployeeLoginDates());
-        _loginsRepository.Setup(x => x.Save()).Throws<Exception>();
-        
-        // Act
-        var result = controller.UpdatedById(id, UpdateEmployeeRequest());
+        var result = controller.UpdatedById(id, EmployeeRequest());
         
         // Assert
         var internalServerResult = Assert.IsType<ObjectResult>(result);
