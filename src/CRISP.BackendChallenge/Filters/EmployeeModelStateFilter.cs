@@ -1,4 +1,3 @@
-using CRISP.BackendChallenge.Constants;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -25,7 +24,7 @@ public class EmployeeModelStateFilter : IActionFilter
             errors = error
         })
         {
-            StatusCode = ErrorConstants.BadRequestStatusCode
+            StatusCode = StatusCodes.Status400BadRequest
         };
     }
 

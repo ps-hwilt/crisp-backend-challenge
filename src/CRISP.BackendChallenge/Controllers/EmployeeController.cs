@@ -4,13 +4,12 @@ using CRISP.BackendChallenge.Models;
 using CRISP.BackendChallenge.Repository;
 using CRISP.BackendChallenge.Constants;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CRISP.BackendChallenge.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[TypeFilter(typeof(ExceptionFilter))]
+[ServiceFilter(typeof(ExceptionFilter))]
 public class EmployeeController : ControllerBase
 {
     private readonly ILogger<EmployeeController> _logger;
@@ -30,7 +29,7 @@ public class EmployeeController : ControllerBase
 
         var employees = _employeeRepository.GetAll();
 
-        if (employees == null!) return NotFound(new { error = ErrorConstants.EmployeesNotFound });
+        if (employees == null) return NotFound(new { error = ErrorConstants.EmployeesNotFound });
 
         var result = employees.Select(x => new EmployeeResponse
         {
@@ -50,7 +49,7 @@ public class EmployeeController : ControllerBase
 
         var employee = _employeeRepository.GetById(id);
         
-        if (employee == null!) return CreateNotFound(id);
+        if (employee == null) return CreateNotFound(id);
         
         return Ok(new EmployeeResponse
         {
@@ -70,15 +69,15 @@ public class EmployeeController : ControllerBase
 
         var logins = employeeRequest.LoginDates?.Select(loginDate => new Login {
             LoginDate = loginDate
-        }).ToList();
+        }).ToList() ?? new List<Login>();
         
         var employee = new Employee
         {
-            Name = employeeRequest.Name!,
-            Department = (Department)employeeRequest.Department!,
+            Name = employeeRequest.Name,
+            Department = (Department)employeeRequest.Department,
             StartDate = employeeRequest.StartDate,
             EndDate = employeeRequest.EndDate,
-            Logins = logins!
+            Logins = logins
         };
 
         _employeeRepository.Add(employee);
@@ -97,19 +96,12 @@ public class EmployeeController : ControllerBase
     public IActionResult SearchEmployees(string? name, int? department)
     {
         _logger.LogDebug(":: Performing {MethodName}", nameof(SearchEmployees));
-
-        var query = _employeeRepository.Query();
         
-        if (!string.IsNullOrWhiteSpace(name))
-            query = query.Where(x => x.Name == name);
+        var employees = _employeeRepository.Search(name, department);
 
-        if (department.HasValue)
-            query = query.Where(x => x.Department == (Department)department);
-
+        if (employees == null) return NotFound(new { error = ErrorConstants.EmployeesNotFound });
         
-        query = query.Include(e => e.Logins);
-        
-        var result = query.Select(x => new EmployeeResponse
+        var result = employees.Select(x => new EmployeeResponse
         {
             Id = x.Id,
             Name = x.Name,
@@ -128,43 +120,32 @@ public class EmployeeController : ControllerBase
     public IActionResult UpdatedById(int id,[FromBody] EmployeeRequest employeeRequest) 
     {
         _logger.LogDebug(":: Performing {MethodName} with ID {Id}", nameof(UpdatedById), id);
-        
-        try
-        {
-            var logins = employeeRequest.LoginDates?.Select(loginDate => new Login {
-                EmployeeId = id,
-                LoginDate = loginDate
-            }).ToList();
-            
-            var employee = new Employee
-            {
-                Id = id,
-                Name = employeeRequest.Name!,
-                Department = (Department)employeeRequest.Department!,
-                StartDate = employeeRequest.StartDate,
-                EndDate = employeeRequest.EndDate,
-                Logins = logins!
-            };
-            
-            var updatedEmployee = _employeeRepository.Update(employee);
 
-            return Ok(new EmployeeResponse
-            {
-                Id = updatedEmployee.Id,
-                Name = updatedEmployee.Name,
-                LoginDates = updatedEmployee.Logins.Select(l => l.LoginDate).ToList()
-            });
-        }
-        catch (KeyNotFoundException e)
+        var logins = employeeRequest.LoginDates?.Select(loginDate => new Login {
+            EmployeeId = id,
+            LoginDate = loginDate
+        }).ToList() ?? new List<Login>();
+        
+        var employee = new Employee
         {
-            _logger.LogDebug(":: Employee Not Found: {Id}, {EMessage}", id, e.Message);
-            return CreateNotFound(id);
-        }
-        catch (ArgumentNullException e)
+            Id = id,
+            Name = employeeRequest.Name,
+            Department = (Department)employeeRequest.Department,
+            StartDate = employeeRequest.StartDate,
+            EndDate = employeeRequest.EndDate,
+            Logins = logins
+        };
+        
+        var updatedEmployee = _employeeRepository.Update(employee);
+
+        if (updatedEmployee == null) return CreateNotFound(id);
+        
+        return Ok(new EmployeeResponse
         {
-            _logger.LogDebug(":: Employee Not Found: {Id}, {EMessage}", id, e.Message);
-            return CreateNotFound(id);
-        }
+            Id = updatedEmployee.Id,
+            Name = updatedEmployee.Name,
+            LoginDates = updatedEmployee.Logins.Select(l => l.LoginDate).ToList()
+        });
     }
     
 
@@ -173,15 +154,12 @@ public class EmployeeController : ControllerBase
     public IActionResult DeleteById(int id)
     {
         _logger.LogDebug(":: Performing {MethodName} with ID {Id}", nameof(DeleteById), id);
-
-        var employee = _employeeRepository.GetById(id);
         
-        if (employee == null!) return CreateNotFound(id);
+        var isDeleted = _employeeRepository.Delete(id);
         
-        _employeeRepository.Delete(employee);
-
-        return NoContent();
+        if (isDeleted) return NoContent();
         
+        return CreateNotFound(id);
     }
     
     

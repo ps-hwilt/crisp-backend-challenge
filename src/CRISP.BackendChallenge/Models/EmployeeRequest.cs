@@ -8,27 +8,27 @@ public class EmployeeRequest
     /// Name of the person
     /// </summary>
     [Required]
-    public string? Name { get; set; }
+    public string Name { get; init; }
 
     /// <summary>
     /// The department of the person
     /// </summary>
     [Required]
-    public int? Department { get; set; }
+    public int Department { get; init; }
 
     /// <summary>
     /// The date which the employee was hired
     /// </summary>
-    public DateTime? StartDate { get; set; }
+    public DateTime? StartDate { get; init; }
     
     /// <summary>
     /// The date which the employee was fired
     /// </summary>
-    public DateTime? EndDate { get; set; }
+    public DateTime? EndDate { get; init; }
     
     /// <summary>
     /// List of the employee's login dates
     /// </summary>
-    public List<DateTime>? LoginDates { get; set; }
+    public List<DateTime>? LoginDates { get; init; }
     
 }

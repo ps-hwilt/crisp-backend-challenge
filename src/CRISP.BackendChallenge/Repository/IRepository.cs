@@ -12,36 +12,37 @@ namespace CRISP.BackendChallenge.Repository
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public IQueryable<T> Query();
+        public IQueryable<Employee> Query();
 
         /// <summary>
         /// Get All Entities available in the database.
         /// </summary>
         /// <typeparam name="T">The type of entity</typeparam>
         /// <returns>An enumerable of the Entity Type</returns>
-        IEnumerable<T> GetAll();
+        IEnumerable<Employee> GetAll();
 
         /// <summary>
         /// Get an instance of the Entity by Id.
         /// </summary>
         /// <param name="id"></param>
-        /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        T GetById(int id);
+        Employee? GetById(int id);
 
         /// <summary>
         /// Add an entity to the database.
         /// </summary>
         /// <param name="entity"></param>
         /// <typeparam name="T"></typeparam>
-        void Add(T entity);
+        void Add(Employee entity);
 
         /// <summary>
         /// Delete an entity from the database.
+        /// returns true if deletion is complete
+        /// returns false if employee is not found
         /// </summary>
-        /// <param name="entity"></param>
+        /// <param name="id"></param>
         /// <typeparam name="T"></typeparam>
-        void Delete(T entity);
+        bool Delete(int id);
 
         /// <summary>
         /// Update an entity in the database.
@@ -49,7 +50,17 @@ namespace CRISP.BackendChallenge.Repository
         /// <param name="entity"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        T Update(T entity);
+        Employee? Update(Employee entity);
+        
+        
+        /// <summary>
+        /// Searches an entity in the database.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="department"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        IEnumerable<Employee> Search(string? name, int? department);
 
         /// <summary>
         /// Save the changes to the database.

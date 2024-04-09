@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using CRISP.BackendChallenge.Context.Models;
 using CRISP.BackendChallenge.Controllers;
 using CRISP.BackendChallenge.Models;
 using CRISP.BackendChallenge.Repository;
@@ -17,14 +15,8 @@ namespace CRISP.BackendChallenge.Test.Controllers;
 
 public class TestEmployeeController
 {
-    private readonly Mock<IRepository<Employee>> _employeeRepository;
-    private readonly Mock<ILogger<EmployeeController>> _logger;
-
-    public TestEmployeeController()
-    {
-        _employeeRepository = new Mock<IRepository<Employee>>();
-        _logger = new Mock<ILogger<EmployeeController>>();
-    }
+    private readonly Mock<IRepository<Employee>> _employeeRepository = new();
+    private readonly Mock<ILogger<EmployeeController>> _logger = new();
 
     private EmployeeController CreateEmployeeController()
     {
@@ -101,26 +93,11 @@ public class TestEmployeeController
     }
     
     [Fact]
-    public void GetById_ReturnsInternalServerError()
-    {
-        // Arrange
-        var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(1)).Throws<Exception>();
-        
-        // Act
-        var result = controller.GetById(1);
-        
-        // Assert
-        var internalServerResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, internalServerResult.StatusCode);
-        Assert.Contains("An error occurred while processing your request", internalServerResult.Value!.ToString()!);
-    }
-    
-    [Fact]
     public void AddEmployee_ReturnsOkResult()
     {
         // Arrange
         var controller = CreateEmployeeController();
+        _employeeRepository.Setup(x => x.Add(EmployeeLoginDates()));
         
         // Act
         var result = controller.AddEmployee(EmployeeRequest());
@@ -136,62 +113,11 @@ public class TestEmployeeController
     }
 
     [Fact]
-    public void AddEmployee_ReturnsBadRequestResult_Name()
-    {
-        // Arrange
-        var controller = CreateEmployeeController();
-        
-        // Act
-        var result = controller.AddEmployee(BadEmployeeRequest_Name());
-        
-        // Assert
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal(400, badRequestResult.StatusCode);
-        Debug.Assert(badRequestResult.Value != null, "badRequestResult.Value != null");
-        Assert.Contains("Invalid Model", badRequestResult.Value.ToString()!);
-        Assert.Contains("Name field required", badRequestResult.Value.ToString()!);
-    }
-    
-    [Fact]
-    public void AddEmployee_ReturnsBadRequestResult_Department()
-    {
-        // Arrange
-        var controller = CreateEmployeeController();
-        
-        // Act
-        var result = controller.AddEmployee(BadEmployeeRequest_Department());
-        
-        // Assert
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal(400, badRequestResult.StatusCode);
-        //Debug.Assert(badRequestResult.Value != null, "badRequestResult.Value != null");
-        Assert.Contains("Invalid Model", badRequestResult.Value!.ToString()!);
-        Assert.Contains("Department field required", badRequestResult.Value.ToString()!);
-    }
-    
-    [Fact]
-    public void AddEmployee_ReturnsInternalServerError_EmployeeRepository()
-    {
-        // Arrange
-        var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.Add(EmployeeLoginDates())).Throws<Exception>();
-        
-        // Act
-        var result = controller.AddEmployee(EmployeeRequest());
-        
-        // Assert
-        var internalServerResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, internalServerResult.StatusCode);
-        Assert.Contains("An error occurred while processing your request", internalServerResult.Value!.ToString()!);
-    }
-    
-
-    [Fact]
     public void DeleteEmployee_ReturnsNoContent()
     {
         // Arrange
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(1)).Returns(Employee());
+        _employeeRepository.Setup(x => x.Delete(1)).Returns(true);
         
         // Act
         var result = controller.DeleteById(1);
@@ -206,7 +132,7 @@ public class TestEmployeeController
     {
         // Arrange
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(10)).Returns((Employee)null!);
+        _employeeRepository.Setup(x => x.Delete(10)).Returns(false);
         
         // Act
         var result = controller.DeleteById(10);
@@ -215,30 +141,14 @@ public class TestEmployeeController
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal(404, notFoundResult.StatusCode);
     }
-    
-    
-    [Fact]
-    public void DeleteEmployee_ReturnsInternalServerError_EmployeeRepository()
-    {
-        // Arrange
-        var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(1)).Throws<Exception>();
-        
-        // Act
-        var result = controller.DeleteById(1);
-        
-        // Assert
-        var internalServerResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, internalServerResult.StatusCode);
-    }
 
     [Fact]
     public void SearchEmployees_WithName_ReturnsOkResult()
     {
         // Arrange
-        var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.Query()).Returns(GetAllEmployees);
         const string name = "Test Employee 2";
+        var controller = CreateEmployeeController();
+        _employeeRepository.Setup(x => x.Search(name, null)).Returns(SearchEmployee);
 
         // Act
         var result = controller.SearchEmployees(name, null);
@@ -254,9 +164,9 @@ public class TestEmployeeController
     public void SearchEmployees_WithDepartment_ReturnsOkResult()
     {
         // Arrange
-        var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.Query()).Returns(GetAllEmployees);
         const int department = 1;
+        var controller = CreateEmployeeController();
+        _employeeRepository.Setup(x => x.Search(null, department)).Returns(SearchEmployee);
 
         // Act
         var result = controller.SearchEmployees(null, department);
@@ -269,11 +179,11 @@ public class TestEmployeeController
     }
 
     [Fact]
-    public void SearchEmployees_WithNoCriteria_ReturnsOkResult()
+    public void SearchEmployees_WithNoParameters_ReturnsOkResult()
     {
         // Arrange
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.Query()).Returns(GetAllEmployees);
+        _employeeRepository.Setup(x => x.Search(null, null)).Returns(GetAllEmployees());
 
         // Act
         var result = controller.SearchEmployees(null, null);
@@ -286,30 +196,15 @@ public class TestEmployeeController
     }
     
     [Fact]
-    public void SearchEmployees_ReturnsInternalServerError()
-    {
-        // Arrange
-        var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetAll()).Throws<Exception>();
-
-        // Act
-        var result = controller.SearchEmployees(null, null);
-
-        // Assert
-        var internalServerErrorResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, internalServerErrorResult.StatusCode);
-    }
-    
-    [Fact]
     public void UpdateEmployee_ReturnsOkResult()
     {
         // Arrange
         const int id = 0;
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.Update(Employee())).Returns(EmployeeLoginDates());
-        
+        _employeeRepository.Setup(x => x.Update(It.IsAny<Employee>())).Returns(UpdatedEmployee());
+
         // Act
-        var result = controller.UpdatedById(id, EmployeeRequest());
+        var result = controller.UpdatedById(id, UpdateEmployeeRequest());
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -318,7 +213,7 @@ public class TestEmployeeController
         Assert.Equal("Updated Name", employeeResponse.Name);
         Assert.Equal(0, employeeResponse.Id);
         Debug.Assert(employeeResponse.LoginDates != null, "employeeResponse.LoginDates != null");
-        Assert.Equal(2, employeeResponse.LoginDates.Count);
+        Assert.Single(employeeResponse.LoginDates);
     }
     
     [Fact]
@@ -327,33 +222,15 @@ public class TestEmployeeController
         // Arrange
         const int id = 0;
         var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(id)).Throws<ArgumentNullException>();
+        _employeeRepository.Setup(x => x.Update(It.IsAny<Employee>())).Returns((Employee?)null);
         
         // Act
-        var result = controller.UpdatedById(id, EmployeeRequest());
+        var result = controller.UpdatedById(id, UpdateEmployeeRequest());
         
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal(404, notFoundResult.StatusCode);
         Assert.Equal("{ error = Employee Not Found, Id = 0 }", notFoundResult.Value!.ToString()!);
-    }
-    
-    [Fact]
-    public void UpdateEmployee_ReturnsInternalServerError_EmployeeRepository()
-    {
-        // Arrange
-        const int id = 0;
-        var controller = CreateEmployeeController();
-        _employeeRepository.Setup(x => x.GetById(id)).Returns(EmployeeLoginDates());
-        _employeeRepository.Setup(x => x.Save()).Throws<Exception>();
-        
-        // Act
-        var result = controller.UpdatedById(id, EmployeeRequest());
-        
-        // Assert
-        var internalServerResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, internalServerResult.StatusCode);
-        Assert.Contains("An error occurred while processing your request", internalServerResult.Value!.ToString()!);
     }
 
 }

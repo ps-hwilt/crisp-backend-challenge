@@ -13,39 +13,30 @@ public class ContextRepository<T> : IRepository<T> where T : BaseEntity
         _context = context;
     }
 
-    public IQueryable<T> Query()
+    public IQueryable<Employee> Query()
     {
-        return _context.Set<T>().AsQueryable();
+        return _context.Set<Employee>().AsQueryable();
     }
 
     /// <inheritdoc />
-    public IEnumerable<T> GetAll()
+    public IEnumerable<Employee> GetAll()
     {
         var entities = _context.Employees.Include(e => e.Logins).ToList();
-        if (entities == null!)
-        {
-            return null!;
-        }
-
-        return (entities as IEnumerable<T>)!;
+        return entities;
     }
 
     /// <inheritdoc />
-    public T GetById(int id)
+    public Employee? GetById(int id)
     {
         Employee? entity = _context.Employees
             .Include(e => e.Logins)
             .FirstOrDefault(e => e.Id == id);
-        if (entity == null)
-        {
-            return null!;
-        }
-        return (entity as T)!;
+        return entity ?? null;
     }
 
     /// <exception cref="ArgumentNullException"></exception>
     /// <inheritdoc />
-    public void Add(T entity)
+    public void Add(Employee entity)
     {
         if (entity == null)
         {
@@ -54,59 +45,53 @@ public class ContextRepository<T> : IRepository<T> where T : BaseEntity
         _context.Add(entity);
         Save();
     }
-
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <inheritdoc />
-    public void Delete(T entity)
+    
+    public bool Delete(int id)
     {
-        if (entity == null)
-        {
-            throw new ArgumentNullException(nameof(entity));
-        }
+        Employee? entity = _context.Employees
+            .Include(e => e.Logins)
+            .FirstOrDefault(e => e.Id == id);
+        
+        if (entity == null) return false;
+        
         _context.Remove(entity);
         Save();
-    }
-
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <inheritdoc />
-    public T Update(T entity)
-    {
-        if (entity == null)
-        {
-            throw new ArgumentNullException(nameof(entity));
-        }
         
+        return true;
+    }
+    
+    public Employee? Update(Employee entity)
+    {
         var existingEntity = _context.Employees
             .Include(e => e.Logins)
             .FirstOrDefault(x => x.Id == entity.Id);
 
-        if (existingEntity == null)
-        {
-            throw new KeyNotFoundException($"Entity with ID {entity.Id} not found.");
-        }
+        if (existingEntity == null) return null;
         
         _context.Entry(existingEntity).CurrentValues.SetValues(entity);
 
-        UpdateLogins(existingEntity, entity);
+        foreach (var login in entity.Logins)
+        {
+            existingEntity.Logins.Add(login);
+        }
         
         Save();
 
-        return (existingEntity as T)!;
+        return existingEntity;
     }
-
-    private void UpdateLogins(Employee existingEntity, T updatedEntity)
+    
+    public IEnumerable<Employee> Search(string? name, int? department)
     {
-        if (updatedEntity is Employee updatedEmployeeEntity)
-        {
-            if (updatedEmployeeEntity.Logins != null!)
-            {
-                foreach (var login in updatedEmployeeEntity.Logins)
-                {
-                    existingEntity.Logins.Add(login);
-                }
-            }
-        }
+        var query = _context.Set<Employee>().AsQueryable();
         
+        if (!string.IsNullOrWhiteSpace(name))
+            query = query.Where(x => x.Name == name);
+
+        if (department.HasValue)
+            query = query.Where(x => x.Department == (Department)department);
+        
+        query = query.Include(e => e.Logins);
+        return query;
     }
 
     /// <inheritdoc />

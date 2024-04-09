@@ -57,6 +57,25 @@ public static class MockEmployeeData
             }
         };
     }
+    
+    public static IEnumerable<Employee> SearchEmployee()
+    {
+        return new List<Employee>
+        {
+            new Employee
+            {
+                Name = "Test Employee 2",
+                Department = Department.Engineering,
+                StartDate = DateTime.Now,
+                Logins = new List<Login>
+                {
+                    LoginDate(-1),
+                    LoginDate(-2)
+                }
+            }
+        };
+
+    }
 
     public static EmployeeRequest EmployeeRequest()
     {
@@ -82,7 +101,21 @@ public static class MockEmployeeData
             StartDate = DateTime.Now,
             LoginDates = new List<DateTime>
             {
-                DateTime.Now
+                DateTime.Now.AddMonths(-1)
+            }
+        };
+    }
+    
+    public static Employee UpdatedEmployee()
+    {
+        return new Employee
+        {
+            Name = "Updated Name",
+            Department = 0,
+            StartDate = DateTime.Now,
+            Logins = new List<Login>
+            {
+                LoginDate(-1)
             }
         };
     }

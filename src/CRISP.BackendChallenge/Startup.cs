@@ -22,11 +22,6 @@ public class Startup
         {
             options.Filters.Add<ExceptionFilter>();
             options.Filters.Add<EmployeeModelStateFilter>();
-        })
-        .AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.ReferenceHandler =
-                System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         });
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
@@ -36,7 +31,8 @@ public class Startup
         {
             options.SuppressModelStateInvalidFilter = true;
         });
-        
+
+        services.AddScoped<ExceptionFilter>();
         services.AddScoped<EmployeeModelStateFilter>();
     }
 
